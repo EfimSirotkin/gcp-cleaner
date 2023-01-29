@@ -7,29 +7,40 @@ on:
 
 env:
   GCP_KEY : ${{ secrets.GCP_PASSWORD }}
+  SERVICE_NAME: "hello"
+  REGION : "us-central1"
+  NUMBER_OF_REVISIONS : 5
 
 jobs:
   gcr-cleaner:
     runs-on: 'ubuntu-latest'
     steps:
 
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: 'Install dependencies'
+      run: "apt update && apt -y install libjs-jquery"
+
     - id: 'auth'
       uses: 'google-github-actions/auth@v1'
       with:
-      credentials_json: '${{ GCP_KEY }}'
+       credentials_json: '${{ env.GCP_KEY }}'
 
     - name: 'Set up Cloud SDK'
       uses: 'google-github-actions/setup-gcloud@v1'
+      with:
+        install_components: 'alpha'
 
-    - name: 'Use gcloud CLI'
-      run: 'gcloud container images list'
+    - name: 'Delete old revisions'
+      run: "./revisions.sh ${{ env.SERVICE_NAME}} ${{ env.REGION }}  ${{ env.NUMBER_OF_REVISIONS }}"
 
       # configure based on your registry
     - uses: 'docker/login-action@v2'
       with:
         registry: gcr.io
         username: ${{ secrets.GCP_USERNAME }}
-        password: ${{ GCP_KEY }}
+        password: ${{ env.GCP_KEY }}
 
       # customize based on the gcr-cleaner flags
     - uses: 'docker://us-docker.pkg.dev/gcr-cleaner/gcr-cleaner/gcr-cleaner-cli'
