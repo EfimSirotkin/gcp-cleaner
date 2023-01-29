@@ -1,0 +1,39 @@
+name: GCP-Cleaner
+
+on:
+  schedule:
+    - cron: '30 1 15 * *'
+  workflow_dispatch:
+
+
+jobs:
+  gcr-cleaner:
+    runs-on: 'ubuntu-latest'
+    steps:
+    
+
+
+#     - name: 'Set up Cloud SDK'
+#       uses: 'google-github-actions/setup-gcloud@v1'
+
+#     - name: 'Use gcloud CLI'
+#       run: 'gcloud container images list'
+    
+    - id: 'auth'
+      uses: 'google-github-actions/auth@v1'
+      with:
+       credentials_json: '${{ secrets.GCP_PASSWORD }}'
+    
+      # configure based on your registry
+    - uses: 'docker/login-action@v2'
+      with:
+        registry: gcr.io
+        username: ${{ secrets.GCP_USERNAME }}
+        password: ${{ secrets.GCP_PASSWORD }}
+
+      # customize based on the gcr-cleaner flags
+    - uses: 'docker://us-docker.pkg.dev/gcr-cleaner/gcr-cleaner/gcr-cleaner-cli'
+      with:
+        args: >-
+          -repo=gcr.io/alconost-sandbox/testimage
+          -grace=10s
